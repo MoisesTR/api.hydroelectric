@@ -8,12 +8,18 @@ dotenv.config({
 console.log(process.env.APP_ENV);
 /* eslint-disable */
 
+process.on('unhandledRejection', (ex) => {
+    console.log(`Unhandled rejection ${ex}`);
+    throw ex;
+});
+
 import { loadControllers } from 'awilix-express';
 import cors from 'cors';
 import express from 'express';
 import loadContainer from './container';
 
 const app: express.Application = express();
+
 // JSON SUPPORT
 app.use(express.json());
 
