@@ -13,9 +13,11 @@ export default abstract class BaseController {
                 res.send(err.message);
                 return;
             }
-            throw new Error(err.message);
+            console.log(err.message);
+            // throw new Error(err.message);
         } else {
-            throw new Error(err);
+            console.log(err.message);
+            // throw new Error(err);
         }
     }
 }

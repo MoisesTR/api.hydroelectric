@@ -7,4 +7,6 @@ export interface UserH extends Audit {
     firstName: string;
     lastName: string;
     roles: Rol[];
+    enabled: boolean;
+    password: string;
 }

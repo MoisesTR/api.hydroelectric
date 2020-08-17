@@ -1,72 +1,74 @@
-import connector from '../../common/persistence/mssql.persistence';
 import { UserRepository } from '../user.repository';
 import { UserH } from '../../domain/interfaces/user-h';
-
-const baseSelect = `SELECT  userId = UserId, userName = UserName, firstName = FirstName,
-                            lastName = LastName, createdAt = CreatedAt, createdBy = CreatedBy,
-                            updatedAt = UpdatedAt, updatedBy = UpdatedBy
-                    FROM UserH `;
+import { BASE_SELECT } from '../../common/statements/user.statement';
+import SimpleQuery from '../../common/sql/simple.query';
 
 export default class UserRepositoryImpl implements UserRepository {
     public async all(): Promise<UserH[]> {
-        const pool = await connector;
-        const result = await pool.query(`${baseSelect} ORDER BY 1 DESC`);
-
-        return result.recordset;
+        const query = new SimpleQuery<UserH>(`${BASE_SELECT} ORDER BY UserId DESC`);
+        return query.getResultList();
     }
 
     public async find(id: number): Promise<UserH | null> {
-        const pool = await connector;
-        const result = await pool.query`
-            SELECT  userId = UserId, userName = UserName, firstName = FirstName,
-                    lastName = LastName, createdAt = CreatedAt, createdBy = CreatedBy,
-                    updatedAt = UpdatedAt, updatedBy = UpdatedBy
-            FROM UserH  
-            WHERE UserId = ${id}`;
-
-        if (result.rowsAffected) {
-            return result.recordset[0];
-        }
-        return null;
+        const query = new SimpleQuery<UserH>(`${BASE_SELECT} WHERE UserId = @UserId`);
+        query.setParam('UserId', id);
+        return query.getSingleResult();
     }
 
     public async findByUserName(userName: string): Promise<UserH | null> {
-        const pool = await connector;
-        const result = await pool.query`
-            SELECT  userId = UserId, userName = UserName, firstName = FirstName,
-                    lastName = LastName, createdAt = CreatedAt, createdBy = CreatedBy,
-                    updatedAt = UpdatedAt, updatedBy = UpdatedBy
-            FROM UserH   
-            WHERE UserName = ${userName}`;
-
-        if (result.rowsAffected) {
-            return result.recordset[0];
-        }
-        return null;
+        const query = new SimpleQuery<UserH>(`${BASE_SELECT} WHERE UserName = @UserName`);
+        query.setParam('UserName', userName);
+        return query.getSingleResult();
     }
 
-    public async store(user: UserH): Promise<void> {
-        const pool = await connector;
-        const now = new Date();
+    public async store(user: UserH): Promise<number> {
+        const query = new SimpleQuery(`
+            INSERT INTO UserH(UserName, FirstName, LastName, Password, CreatedAt, CreatedBy)
+            VALUES(@UserName, @FirstName, @LastName, @Password, @CreatedAt, @CreatedBy)
+        `);
+        query.setParam('UserName', user.userName);
+        query.setParam('FirstName', user.firstName);
+        query.setParam('LastName', user.lastName);
+        query.setParam('Password', user.password);
+        query.setParam('CreatedAt', new Date());
+        query.setParam('CreatedBy', user.createdBy);
 
-        await pool.query`INSERT INTO UserH(UserName, FirstName, LastName, CreatedAt, CreatedBy)
-             VALUES(${user.userName}, ${user.firstName}, ${user.lastName}, ${now}, ${user.createdBy})
-            `;
+        return query.executeUpdate();
     }
 
-    public async update(user: UserH): Promise<void> {
-        const pool = await connector;
-        const now = new Date();
+    public async update(user: UserH): Promise<number> {
+        const query = new SimpleQuery(`
+            UPDATE  UserH 
+            SET     FirstName = @FirstName,
+                    LastName = @LastName,
+                    UpdatedAt = @UpdatedAt,
+                    UpdatedBy = @UpdatedBy
+            WHERE   UserId = @UserId
+        `);
 
-        await pool.query`UPDATE UserH 
-             SET FirstName = ${user.firstName}
-                , LastName = ${user.lastName}
-                , UpdatedAt = ${now}
-                , UpdatedBy = ${user.updatedBy}
-             `;
+        query.setParam('FirstName', user.firstName);
+        query.setParam('LastName', user.lastName);
+        query.setParam('UpdatedAt', new Date());
+        query.setParam('UpdatedBy', user.updatedBy);
+        query.setParam('UserId', user.userId);
+
+        return query.executeUpdate();
     }
 
-    public async remove(id: number): Promise<void> {
-        throw new Error('Method not implemented.');
+    public async changeState(user: UserH): Promise<number> {
+        const query = new SimpleQuery(`
+            UPDATE  UserH 
+            SET     Enabled = @Enabled,
+                    UpdatedAt = @UpdatedAt,
+                    UpdatedBy = @UpdatedBy
+            WHERE   UserId = @UserId
+        `);
+
+        query.setParam('Enabled', user.enabled);
+        query.setParam('UpdatedBy', user.updatedBy);
+        query.setParam('UpdatedAt', new Date());
+        query.setParam('UserId', user.userId);
+
+        return query.executeUpdate();
     }
 }
