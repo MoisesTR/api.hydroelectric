@@ -1,13 +1,14 @@
-import { TypeQuery } from '../../enums/type-query';
+import TypeQuery from '../../enums/type-query';
 import ApplicationException from '../exceptions/application.exception';
 
 export default class BaseService {
     nameIdentity: string;
+
     constructor(nameIdentity: string) {
         this.nameIdentity = nameIdentity;
     }
 
-    validateUpdate(rowsAffected: number, typeQuery: TypeQuery): void {
+    verifyUpdate(rowsAffected: number, typeQuery: TypeQuery): void {
         if (rowsAffected < 1) {
             switch (typeQuery) {
                 case TypeQuery.INSERT:

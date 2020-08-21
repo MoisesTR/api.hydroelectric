@@ -3,7 +3,7 @@ import { Rol } from '../domain/interfaces/rol';
 import { RolCreateDto, RolUpdateDto } from '../dtos/rol.dto';
 import ApplicationException from '../common/exceptions/application.exception';
 import BaseService from '../common/services/base.service';
-import { TypeQuery } from '../enums/type-query';
+import TypeQuery from '../enums/type-query';
 
 export default class RolService extends BaseService {
     constructor(private readonly rolRepository: RolRepository) {
@@ -34,7 +34,7 @@ export default class RolService extends BaseService {
         } else {
             const rowsAffected = await this.rolRepository.store(rolDto as Rol);
 
-            this.validateUpdate(rowsAffected, TypeQuery.INSERT);
+            this.verifyUpdate(rowsAffected, TypeQuery.INSERT);
         }
     }
 
@@ -46,7 +46,7 @@ export default class RolService extends BaseService {
         } else {
             const rowsAffected = await this.rolRepository.update(rolDto as Rol);
 
-            this.validateUpdate(rowsAffected, TypeQuery.UPDATE);
+            this.verifyUpdate(rowsAffected, TypeQuery.UPDATE);
         }
     }
 }

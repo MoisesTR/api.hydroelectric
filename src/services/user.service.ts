@@ -3,7 +3,7 @@ import { UserH } from '../domain/interfaces/user-h';
 import { UserCreateDTO, UserUpdateDto, UserChangeStateDto } from '../dtos/user.dto';
 import ApplicationException from '../common/exceptions/application.exception';
 import BaseService from '../common/services/base.service';
-import { TypeQuery } from '../enums/type-query';
+import TypeQuery from '../enums/type-query';
 
 export default class UserService extends BaseService {
     constructor(private readonly userRepository: UserRepository) {
@@ -34,7 +34,7 @@ export default class UserService extends BaseService {
         } else {
             const rowsAffected = await this.userRepository.store(userDto as UserH);
 
-            this.validateUpdate(rowsAffected, TypeQuery.INSERT);
+            this.verifyUpdate(rowsAffected, TypeQuery.INSERT);
         }
     }
 
@@ -46,7 +46,7 @@ export default class UserService extends BaseService {
         } else {
             const rowsAffected = await this.userRepository.update(userDto as UserH);
 
-            this.validateUpdate(rowsAffected, TypeQuery.UPDATE);
+            this.verifyUpdate(rowsAffected, TypeQuery.UPDATE);
         }
     }
 
@@ -58,7 +58,7 @@ export default class UserService extends BaseService {
         } else {
             const rowsAffected = await this.userRepository.changeState(userDto as UserH);
 
-            this.validateUpdate(rowsAffected, TypeQuery.UPDATE);
+            this.verifyUpdate(rowsAffected, TypeQuery.UPDATE);
         }
     }
 }

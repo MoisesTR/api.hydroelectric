@@ -1,73 +1,77 @@
+import connector from '../../common/persistence/mssql.persistence';
 import { UserRepository } from '../user.repository';
 import { UserH } from '../../domain/interfaces/user-h';
-import { BASE_SELECT } from '../../common/statements/user.statement';
+import BASE_SELECT from '../../common/statements/user.statement';
 import SimpleQuery from '../../common/sql/simple.query';
+import nameofFactory from '../../common/factory/name-of-factory';
 
 export default class UserRepositoryImpl implements UserRepository {
+    private nameOf = nameofFactory<UserH>();
+
     public async all(): Promise<UserH[]> {
         const query = new SimpleQuery<UserH>(`${BASE_SELECT} ORDER BY UserId DESC`);
         return query.getResultList();
     }
 
     public async find(id: number): Promise<UserH | null> {
-        const query = new SimpleQuery<UserH>(`${BASE_SELECT} WHERE UserId = @UserId`);
-        query.setParam('UserId', id);
+        const query = new SimpleQuery<UserH>(`${BASE_SELECT} WHERE UserId = ${this.nameOf('userId')}`);
+        query.setParam('userId', id);
         return query.getSingleResult();
     }
 
     public async findByUserName(userName: string): Promise<UserH | null> {
-        const query = new SimpleQuery<UserH>(`${BASE_SELECT} WHERE UserName = @UserName`);
-        query.setParam('UserName', userName);
+        const query = new SimpleQuery<UserH>(`${BASE_SELECT} WHERE UserName = ${this.nameOf('userName')}`);
+        query.setParam('userName', userName);
         return query.getSingleResult();
     }
 
     public async store(user: UserH): Promise<number> {
-        const query = new SimpleQuery(`
-            INSERT INTO UserH(UserName, FirstName, LastName, Password, CreatedAt, CreatedBy)
-            VALUES(@UserName, @FirstName, @LastName, @Password, @CreatedAt, @CreatedBy)
+        const query = new SimpleQuery<UserH>(`
+            INSERT INTO UserH(UserName, FirstName, LastName, Password, CreatedBy)
+            VALUES (
+                ${this.nameOf('userName')}, ${this.nameOf('firstName')}
+                , ${this.nameOf('lastName')}, ${this.nameOf('password')}
+                , ${this.nameOf('createdBy')}
+            )
         `);
-        query.setParam('UserName', user.userName);
-        query.setParam('FirstName', user.firstName);
-        query.setParam('LastName', user.lastName);
-        query.setParam('Password', user.password);
-        query.setParam('CreatedAt', new Date());
-        query.setParam('CreatedBy', user.createdBy);
+
+        query.setParam('userName', user.userName);
+        query.setParam('firstName', user.firstName);
+        query.setParam('lastName', user.lastName);
+        query.setParam('password', user.password);
+        query.setParam('createdBy', user.createdBy);
 
         return query.executeUpdate();
     }
 
     public async update(user: UserH): Promise<number> {
-        const query = new SimpleQuery(`
-            UPDATE  UserH 
-            SET     FirstName = @FirstName,
-                    LastName = @LastName,
-                    UpdatedAt = @UpdatedAt,
-                    UpdatedBy = @UpdatedBy
-            WHERE   UserId = @UserId
+        const query = new SimpleQuery<UserH>(`
+            UPDATE  UserH
+            SET     FirstName = ${this.nameOf('firstName')}
+                    , LastName = ${this.nameOf('lastName')}
+                    , UpdatedBy = ${this.nameOf('updatedBy')}
+            WHERE   UserId = ${this.nameOf('userId')}
         `);
 
-        query.setParam('FirstName', user.firstName);
-        query.setParam('LastName', user.lastName);
-        query.setParam('UpdatedAt', new Date());
-        query.setParam('UpdatedBy', user.updatedBy);
-        query.setParam('UserId', user.userId);
+        query.setParam('firstName', user.updatedBy);
+        query.setParam('lastName', user.updatedBy);
+        query.setParam('updatedBy', user.updatedBy);
+        query.setParam('userId', user.updatedBy);
 
         return query.executeUpdate();
     }
 
     public async changeState(user: UserH): Promise<number> {
-        const query = new SimpleQuery(`
-            UPDATE  UserH 
-            SET     Enabled = @Enabled,
-                    UpdatedAt = @UpdatedAt,
-                    UpdatedBy = @UpdatedBy
-            WHERE   UserId = @UserId
+        const query = new SimpleQuery<UserH>(`
+            UPDATE  UserH
+            SET     Enabled = ${this.nameOf('enabled')}
+                    , UpdatedBy = ${this.nameOf('updatedBy')}
+            WHERE   UserId = ${this.nameOf('userId')}
         `);
 
-        query.setParam('Enabled', user.enabled);
-        query.setParam('UpdatedBy', user.updatedBy);
-        query.setParam('UpdatedAt', new Date());
-        query.setParam('UserId', user.userId);
+        query.setParam('enabled', user.enabled);
+        query.setParam('updatedBy', user.updatedBy);
+        query.setParam('userId', user.userId);
 
         return query.executeUpdate();
     }

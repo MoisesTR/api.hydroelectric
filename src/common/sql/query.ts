@@ -3,7 +3,7 @@ import { SqlParam, ISqlTypeFactory, IResult } from '../services/database.service
 export default abstract class Query<T> {
     protected params?: SqlParam[] = [];
 
-    setParam(pName: string, pValue: any, pType?: ISqlTypeFactory) {
+    setParam(pName: Extract<keyof T, string>, pValue: any, pType?: ISqlTypeFactory) {
         if (this.params) {
             this.params.push({ pMode: 1, pName, pValue, pType });
         }
