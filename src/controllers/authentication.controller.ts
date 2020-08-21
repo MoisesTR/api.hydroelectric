@@ -12,12 +12,10 @@ export default class AuthenticationController extends BaseController {
     @route('/authenticate')
     @POST()
     public async authenticate(req: Request, res: Response) {
-        try {
-            const { body } = req;
-            const result = await this.identityService.authenticate(body.userName, body.password);
-            res.send(result);
-        } catch (error) {
-            this.handleException(error, res);
-        }
+        const { body } = req;
+        this.identityService
+            .authenticate(body.userName, body.password)
+            .then((result) => res.send('usuario autenticado'))
+            .catch((error) => this.handleException(error, res));
     }
 }

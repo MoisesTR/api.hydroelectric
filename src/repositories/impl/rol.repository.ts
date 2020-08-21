@@ -1,70 +1,56 @@
 import { RolRepository } from '../rol.repository';
 import { Rol } from '../../domain/interfaces/rol';
-import connector from '../../common/persistence/mssql.persistence';
-
-const baseSelect = `SELECT rolId = RolId, rolName = RolName, rolDescription = RolDescription, 
-                            createdAt = CreatedAt, createdBy = CreatedBy, updatedAt = UpdatedAt, updatedBy = UpdatedBy
-                    FROM Rol`;
+import BASE_SELECT from '../../common/statements/rol.statement';
+import SimpleQuery from '../../common/sql/simple.query';
+import nameofFactory from '../../common/factory/name-of-factory';
 
 export default class RolRepositoryImpl implements RolRepository {
+    private nameOf = nameofFactory<Rol>();
+
     public async all(): Promise<Rol[]> {
-        const pool = await connector;
-        const result = await pool.query(`${baseSelect} ORDER BY rolId ASC`);
-
-        return result.recordset;
+        const query = new SimpleQuery<Rol>(`${BASE_SELECT} ORDER BY RolId DESC`);
+        return query.getResultList();
     }
 
-    public async find(id: number): Promise<Rol | null> {
-        const pool = await connector;
-        const result = await pool.query`
-                SELECT rolId = RolId, rolName = RolName, rolDescription = RolDescription, 
-                        createdAt = CreatedAt, createdBy = CreatedBy, updatedAt = UpdatedAt, updatedBy = UpdatedBy
-                FROM Rol     
-                WHERE RolId = ${id}`;
-
-        if (result.rowsAffected) {
-            return result.recordset[0];
-        }
-
-        return null;
+    public find(id: number): Promise<Rol | null> {
+        const query = new SimpleQuery<Rol>(`${BASE_SELECT} WHERE RolId = ${this.nameOf('rolId')}`);
+        query.setParam('rolId', id);
+        return query.getSingleResult();
     }
 
-    public async findByRolName(rolName: string): Promise<Rol | null> {
-        const pool = await connector;
-        const result = await pool.query`
-                SELECT rolId = RolId, rolName = RolName, rolDescription = RolDescription, 
-                        createdAt = CreatedAt, createdBy = CreatedBy, updatedAt = UpdatedAt, updatedBy = UpdatedBy
-                FROM Rol      
-                WHERE RolName = ${rolName}`;
-
-        if (result.rowsAffected) {
-            return result.recordset[0];
-        }
-
-        return null;
+    public findByRolName(rolName: string): Promise<Rol | null> {
+        const query = new SimpleQuery<Rol>(`${BASE_SELECT} WHERE RolName = ${this.nameOf('rolName')}`);
+        query.setParam('rolName', rolName);
+        return query.getSingleResult();
     }
 
-    public async store(rol: Rol): Promise<void> {
-        const pool = await connector;
+    public store(rol: Rol): Promise<number> {
+        const query = new SimpleQuery<Rol>(`
+            INSERT INTO Rol(RolName, RolDescription, CreatedBy)
+            VALUES(${this.nameOf('rolName')}, ${this.nameOf('rolDescription')}, ${this.nameOf('createdBy')})
+        `);
+
+        query.setParam('rolName', rol.rolName);
+        query.setParam('rolDescription', rol.rolName);
+        query.setParam('createdBy', rol.createdBy);
+        return query.executeUpdate();
+    }
+
+    public update(rol: Rol): Promise<number> {
         const now = new Date();
-
-        await pool.query`INSERT INTO Rol(RolName, RolDescription, CreatedAt, CreatedBy)
-             VALUES(${rol.rolName}, ${rol.rolDescription}, ${now}, ${rol.createdBy})`;
-    }
-
-    public async update(rol: Rol): Promise<void> {
-        const pool = await connector;
-        const now = new Date();
-
-        await pool.query`UPDATE Rol 
-             SET    RolName = ${rol.rolName}
-                    , RolDescription = ${rol.rolDescription}
-                    , UpdatedAt = ${now}
-                    , UpdatedBy = ${rol.updatedBy}
-            `;
-    }
-
-    public async remove(id: number): Promise<void> {
-        throw new Error('Method not implemented.');
+        const query = new SimpleQuery<Rol>(`
+            UPDATE  Rol
+            SET     RolName = ${this.nameOf('rolName')},
+                    RolDescription = ${this.nameOf('rolDescription')},
+                    UpdatedAt = ${this.nameOf('updatedAt')},
+                    UpdatedBy = ${this.nameOf('updatedBy')}
+            WHERE   RolId = ${this.nameOf('rolId')}
+        `);
+        query.setParam('rolName', rol.rolName);
+        query.setParam('rolDescription', rol.rolDescription);
+        query.setParam('updatedAt', now);
+        query.setParam('updatedBy', rol.updatedBy);
+        query.setParam('rolId', rol.rolId);
+        return query.executeUpdate();
     }
 }
