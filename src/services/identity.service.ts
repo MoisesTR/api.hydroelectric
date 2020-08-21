@@ -18,9 +18,9 @@ export default class IdentityService {
         const user = await query.getSingleResult();
 
         if (!user) {
-            throw new ApplicationException('Las credenciales son invalidas');
+            throw new ApplicationException('Las credenciales son invalidas!');
+        } else {
+            return user;
         }
-
-        return user;
     }
 }

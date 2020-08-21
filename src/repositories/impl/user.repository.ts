@@ -9,8 +9,10 @@ export default class UserRepositoryImpl implements UserRepository {
     private nameOf = nameofFactory<UserH>();
 
     public async all(): Promise<UserH[]> {
-        const query = new SimpleQuery<UserH>(`${BASE_SELECT} ORDER BY UserId DESC`);
-        return query.getResultList();
+        const pool = await connector;
+        const result = await pool.query(`${BASE_SELECT} ORDER BY 1 DESC`);
+
+        return result.recordset;
     }
 
     public async find(id: number): Promise<UserH | null> {
@@ -53,10 +55,10 @@ export default class UserRepositoryImpl implements UserRepository {
             WHERE   UserId = ${this.nameOf('userId')}
         `);
 
-        query.setParam('firstName', user.firstName);
-        query.setParam('lastName', user.lastName);
+        query.setParam('firstName', user.updatedBy);
+        query.setParam('lastName', user.updatedBy);
         query.setParam('updatedBy', user.updatedBy);
-        query.setParam('userId', user.userId);
+        query.setParam('userId', user.updatedBy);
 
         return query.executeUpdate();
     }
@@ -72,7 +74,6 @@ export default class UserRepositoryImpl implements UserRepository {
         query.setParam('enabled', user.enabled);
         query.setParam('updatedBy', user.updatedBy);
         query.setParam('userId', user.userId);
-
         return query.executeUpdate();
     }
 }
