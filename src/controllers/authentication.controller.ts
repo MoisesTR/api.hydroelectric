@@ -15,7 +15,7 @@ export default class AuthenticationController extends BaseController {
         const { body } = req;
         this.identityService
             .authenticate(body.userName, body.password)
-            .then((result) => res.send('usuario autenticado'))
+            .then((result) => res.send(result))
             .catch((error) => this.handleException(error, res));
     }
 }
