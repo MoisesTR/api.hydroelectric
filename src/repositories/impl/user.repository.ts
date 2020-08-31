@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import connector from '../../common/persistence/mssql.persistence';
 import { UserRepository } from '../user.repository';
 import { UserH } from '../../domain/interfaces/user-h';
@@ -37,10 +38,12 @@ export default class UserRepositoryImpl implements UserRepository {
             )
         `);
 
+        const passwordHashed = await bcrypt.hash(user.password, 10);
+
         query.setParam('userName', user.userName);
         query.setParam('firstName', user.firstName);
         query.setParam('lastName', user.lastName);
-        query.setParam('password', user.password);
+        query.setParam('password', passwordHashed);
         query.setParam('createdBy', user.createdBy);
 
         return query.executeUpdate();
